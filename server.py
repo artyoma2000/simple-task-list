@@ -1,11 +1,10 @@
-from aiohttp import web
 import json
-import psycopg2
-from sqlalchemy import create_engine, MetaData, Table
-from sqlalchemy.orm import sessionmaker, declarative_base
+from aiohttp import web
 from sqlalchemy import Column, Integer, String
-
-engine = create_engine('postgresql://postgres:123456789@localhost:5433/postgres')
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+from config import config
+engine = create_engine(f'postgresql://{config.DB_USER}:{config.DB_PASSWORD}@{config.DB_HOST}:{config.DB_PORT}/{config.DB_USER}')
 
 Session = sessionmaker(bind=engine)
 session = Session()
