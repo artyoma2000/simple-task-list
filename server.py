@@ -1,19 +1,22 @@
 from aiohttp import web
 import json
 import psycopg2
+from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import Column, Integer, String
 
-try:
-    connection = psycopg2.connect(
-        user='',
-        password='',
-        database='',
-        host='',
-        port=''
-    )
-except psycopg2.Error as e:
-    print(f"Error connecting to PostgreSQL database: {e}")
+engine = create_engine('postgresql://postgres:123456789@localhost:5433/postgres')
 
-cursor = connection.cursor()
+Session = sessionmaker(bind=engine)
+session = Session()
+
+Base = declarative_base()
+
+
+class User(Base):
+    __tablename__ = 'tasks'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    task = Column(String)
 
 
 class TodoList:
@@ -30,20 +33,15 @@ class TodoList:
         return self.tasks
 
     def duplicate_tasks(self):
-        try:
-            cursor.execute("TRUNCATE tasks")
-            for task in self.tasks:
-                cursor.execute("INSERT INTO tasks (task) VALUES (%s)", (task,))
-            connection.commit()
-        except psycopg2.Error as e:
-            print(f"Error duplicating tasks: {e}")
+        session.query(User).delete()
+        for task in self.tasks:
+            user = User(task=task)
+            session.add(user)
+            session.commit()
 
     def read_tasks(self):
-        try:
-            cursor.execute("SELECT task FROM tasks")
-            self.tasks = [row[0] for row in cursor.fetchall()]
-        except psycopg2.Error as e:
-            print(f"Error reading tasks: {e}")
+        users = session.query(User).all()
+        self.tasks = [row.task for row in users]
 
 
 async def get_tasks(request):
